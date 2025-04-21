@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+
+.env*
+!*.example
+
+*.db
+
+*.session
+
+.vscode/
+.idea/

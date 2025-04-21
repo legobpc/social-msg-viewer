@@ -1,2 +1,14 @@
-dockerignore__pycache__
+__pycache__/
 *.pyc
+*.pyo
+*.pyd
+
+*.db
+*.sqlite3
+*.session
+
+.env*
+!.env.example
+
+.vscode/
+.idea/
