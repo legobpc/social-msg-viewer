@@ -1,117 +1,150 @@
 import os
-from fastapi import APIRouter, Query, Depends
-from app.telegram import client
-from telethon.errors import SessionPasswordNeededError
+from fastapi import APIRouter, Query, Depends, HTTPException
+from telethon.errors import SessionPasswordNeededError, AuthKeyUnregisteredError
 from app.auth_routes import get_current_user
+from app.telegram import utils as tg_utils
+
+PHONE = os.getenv("PHONE")
+TG_PASSWORD = os.getenv("TG_PASSWORD")
 
 router = APIRouter()
+session_data = {}
+session_lock = {}
 
-# Connect to Telegram account (sends login code if not authorized)
-@router.get("/connect")
+@router.get("/connect", response_model=None)
 async def connect(user=Depends(get_current_user)):
-    await client.connect()
-    if not await client.is_user_authorized():
-        phone = os.getenv("PHONE")
-        await client.send_code_request(phone)
-        return {"message": "Code sent to Telegram. Use /login?code=XXXX"}
-    return {"message": "Already authorized"}
-
-
-# Log in to Telegram using received code (handles 2FA if needed)
-@router.get("/login")
-async def login(code: str, user=Depends(get_current_user)):
-    await client.connect()
-    if not await client.is_user_authorized():
-        phone = os.getenv("PHONE")
+    lock = tg_utils.get_lock(user.id, session_lock)
+    async with lock:
+        client = tg_utils.get_user_client(user)
+        await client.connect()
         try:
-            await client.sign_in(phone, code)
-        except SessionPasswordNeededError:
-            password = os.getenv("TG_PASSWORD")
-            await client.sign_in(password=password)
-        return {"message": "Logged in"}
-    return {"message": "Already authorized"}
+            if not await client.is_user_authorized():
+                result = await client.send_code_request(PHONE)
+                session_data[user.id] = result.phone_code_hash
+                return {"message": "Code sent to Telegram. Use /login?code=XXXX"}
+            return {"message": "Already authorized"}
+        finally:
+            await client.disconnect()
 
+@router.get("/login", response_model=None)
+async def login(code: str, user=Depends(get_current_user)):
+    lock = tg_utils.get_lock(user.id, session_lock)
+    async with lock:
+        client = tg_utils.get_user_client(user)
+        await client.connect()
+        try:
+            if not await client.is_user_authorized():
+                phone_code_hash = session_data.get(user.id)
+                if not phone_code_hash:
+                    raise HTTPException(status_code=400, detail="Missing phone_code_hash")
 
-# Get information about the currently logged-in Telegram user
-@router.get("/me")
+                try:
+                    await client.sign_in(PHONE, code, phone_code_hash=phone_code_hash)
+                except SessionPasswordNeededError:
+                    await client.sign_in(password=TG_PASSWORD)
+
+                return {"message": "Logged in"}
+            return {"message": "Already authorized"}
+        finally:
+            await client.disconnect()
+
+@router.get("/me", response_model=None)
 async def get_me(user=Depends(get_current_user)):
-    await client.connect()
-    me = await client.get_me()
-    return {
-        "user_id": me.id,
-        "username": me.username,
-        "first_name": me.first_name,
-        "phone": me.phone
-    }
+    lock = tg_utils.get_lock(user.id, session_lock)
+    async with lock:
+        client = tg_utils.get_user_client(user)
+        await client.connect()
+        try:
+            if not await client.is_user_authorized():
+                raise HTTPException(status_code=401, detail="Telegram not authorized")
+            me = await client.get_me()
+            if not me:
+                raise HTTPException(status_code=500, detail="Could not fetch Telegram profile")
+            return {
+                "user_id": me.id,
+                "username": me.username,
+                "first_name": me.first_name,
+                "phone": me.phone
+            }
+        finally:
+            await client.disconnect()
 
-
-# Get a list of all available Telegram chats
-@router.get("/chats")
+@router.get("/chats", response_model=None)
 async def get_chats(user=Depends(get_current_user)):
-    await client.connect()
-    dialogs = await client.get_dialogs()
+    lock = tg_utils.get_lock(user.id, session_lock)
+    async with lock:
+        client = tg_utils.get_user_client(user)
+        await client.connect()
+        try:
+            if not await client.is_user_authorized():
+                raise HTTPException(status_code=401, detail="Telegram not authorized")
 
-    result = []
-    for dialog in dialogs:
-        entity = dialog.entity
-        result.append({
-            "id": entity.id,
-            "title": getattr(entity, "title", None),
-            "username": getattr(entity, "username", None),
-            "type": type(entity).__name__
-        })
+            dialogs = await client.get_dialogs()
+            result = []
+            for dialog in dialogs:
+                entity = dialog.entity
+                result.append({
+                    "id": entity.id,
+                    "title": getattr(entity, "title", None),
+                    "username": getattr(entity, "username", None),
+                    "type": type(entity).__name__
+                })
+            return result
+        finally:
+            await client.disconnect()
 
-    return result
-
-
-# Get messages from a specific Telegram chat by chat_id or username
-@router.get("/messages")
+@router.get("/messages", response_model=None)
 async def get_messages(
     chat_id: int = Query(None),
     username: str = Query(None),
     user=Depends(get_current_user)
 ):
-    await client.connect()
-
-    if username:
+    lock = tg_utils.get_lock(user.id, session_lock)
+    async with lock:
+        client = tg_utils.get_user_client(user)
+        await client.connect()
         try:
-            entity = await client.get_entity(username)
-        except Exception as e:
-            return {"error": f"Could not find username '{username}': {str(e)}"}
-    elif chat_id:
-        dialogs = await client.get_dialogs()
-        entity = next((d.entity for d in dialogs if d.id == chat_id), None)
-        if not entity:
-            return {"error": f"Chat ID {chat_id} not found in dialogs"}
-    else:
-        return {"error": "You must provide chat_id or username"}
+            if username:
+                try:
+                    entity = await client.get_entity(username)
+                except Exception as e:
+                    return {"error": f"Could not find username '{username}': {str(e)}"}
+            elif chat_id:
+                dialogs = await client.get_dialogs()
+                entity = next((d.entity for d in dialogs if getattr(d.entity, "id", None) == chat_id), None)
+                if not entity:
+                    return {"error": f"Chat ID {chat_id} not found in dialogs"}
+            else:
+                return {"error": "You must provide chat_id or username"}
 
-    messages = []
-    async for msg in client.iter_messages(entity, limit=20):
-        messages.append({
-            "id": msg.id,
-            "text": msg.text,
-            "date": str(msg.date),
-            "from_id": getattr(msg.from_id, 'user_id', None),
-        })
+            messages = []
+            async for msg in client.iter_messages(entity, limit=20):
+                messages.append({
+                    "id": msg.id,
+                    "text": msg.text,
+                    "date": str(msg.date),
+                    "from_id": getattr(msg.from_id, 'user_id', None),
+                })
 
-    return messages
+            return messages
+        finally:
+            await client.disconnect()
 
-
-# Log out from the connected Telegram account and clear session
-@router.post("/logout")
+@router.post("/logout", response_model=None)
 async def logout(user=Depends(get_current_user)):
-    await client.connect()
+    lock = tg_utils.get_lock(user.id, session_lock)
+    async with lock:
+        client = tg_utils.get_user_client(user)
+        await client.connect()
+        try:
+            await client.log_out()
+        finally:
+            await client.disconnect()
 
-    if not await client.is_user_authorized():
-        return {"message": "Not logged in"}
+        session_file = f"user_{user.id}.session"
+        try:
+            os.remove(session_file)
+        except FileNotFoundError:
+            pass
 
-    await client.log_out()
-    await client.disconnect()
-
-    try:
-        os.remove("anon.session")
-    except FileNotFoundError:
-        pass
-
-    return {"message": "Logged out from Telegram"}
+        return {"message": "Logged out from Telegram"}
