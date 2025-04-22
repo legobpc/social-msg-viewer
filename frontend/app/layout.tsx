@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Система перегляду повідомлень соціальних мереж",
-  description: "Система перегляду повідомлень соціальних мереж",
+  title: "Social Msg Viewer",
+  description: "Social Msg Viewer",
 };
 
 export default function RootLayout({

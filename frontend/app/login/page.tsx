@@ -35,7 +35,7 @@ export default function LoginPage() {
   return (
     <div className="auth-page">
       <form onSubmit={handleSubmit} className="auth-form">
-        <h1 className="auth-title">Система перегляду повідомлень соціальних мереж</h1>
+        <h1 className="auth-title">Social Msg Viewer</h1>
 
         <input
           type="text"

@@ -1,16 +1,18 @@
 ### Social Message Viewer
-Цей проект дозволяє переглядати повідомлення з Telegram через інтеграцію з API та відображати їх на веб-сторінці.
+This project allows you to view messages from Telegram through API integration and display them on a web page.
+It can be extended for additional features such as channel management, automated message processing, chat monitoring, or even building a custom Telegram dashboard for personal or administrative use.
 
-### Запуск проекту
-- Клонуйте репозиторій на свій локальний комп'ютер:
+
+### Project Launch
+- Clone the repository to your local machine:
 
 ```
 git clone git@github.com:legobpc/social-msg-viewer.git
 cd social-msg-viewer
 ```
 
-### Налаштування змінних середовища
-Перед тим, як запускати проект, вам потрібно налаштувати середовище
+### Environment Variables Setup
+Before running the project, you need to set up the environment:
 
 ```
 cp /backend/.env.secret.example /backend/.env.secret
@@ -18,30 +20,33 @@ cp /backend/.env.example /backend/.env
 cp /frontend/.env.example /frontend/.env
 ```
 
-Відредагуйте файл ```/backend/.env.secret``` та внесіть ваші власні дані, зокрема:
+Edit the file `/backend/.env.secret` and provide your own data, including:
 
-- API_ID — ваш Telegram API ID.
-- API_HASH — ваш Telegram API Hash.
-- PHONE — ваш номер телефону для Telegram.
-- TG_PASSWORD — ваш Telegram пароль, якщо включена двофакторна аутентифікація.
+- SECRET_KEY — A secret key used for cryptographic operations.
+- DATABASE_URL — The main database connection string. Defaults to SQLite. You can use another database, but some code adjustments may be required.
+- TEST_DATABASE_URL — The test database connection string. Defaults to SQLite. Switching to another database may also require minor code changes.
+- API_ID — Your Telegram API ID obtained from my.telegram.org.
+- API_HASH — Your Telegram API Hash obtained from my.telegram.org.
+- PHONE — The phone number linked to your Telegram account.
+- TG_PASSWORD — Your Telegram account password (used if two-factor authentication is enabled).
 
-Також, налаштуйте порти у файлах:
+Also, configure the ports in the following files:
 ```
 .env
 backend/.env
 frontend/.env
 ```
 
-### Запуск проекту
-Після налаштування всіх змінних середовища, запустіть проект за допомогою Docker:
+### Running the Project
+After setting up all environment variables, start the project using Docker:
 
 ```
 docker-compose up --build
 ```
-Ця команда збере та запустить ваш проект, використовуючи Docker.
+This command will build and launch your project using Docker.
 
-### Доступ до проекту
-Після запуску проекту ви зможете звертатися до нього через браузер, наприклад:
+### Accessing the Project
+Once the project is running, you can access it in your browser, for example:
 - Frontend: http://localhost:3000/
 - Backend: http://localhost:8000/
 
@@ -50,3 +55,15 @@ docker-compose up --build
 admin@example.com
 admin
 ```
+
+### Telegram API
+- Go to the Telegram developer website:
+```
+https://my.telegram.org
+```
+
+- Log in with your phone number (the one linked to Telegram).
+- Confirm the login using the code from Telegram.
+- Go to the **API development tools** section.
+- Create a new application.
+- Retrieve your **API ID** and **API Hash**.

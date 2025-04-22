@@ -125,7 +125,7 @@ export default function ChatsPage() {
   return (
     <div className="chats-page">
       <div className="chats-header">
-        <h1 className="chats-title">Система перегляду повідомлень соціальних мереж</h1>
+        <h1 className="chats-title">Social Msg Viewer</h1>
         <div style={{ display: "flex", gap: "10px" }}>
           {!loading && !telegramNotConnected && (
             <button onClick={handleTelegramLogout} className="chats-logout">
