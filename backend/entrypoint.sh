@@ -9,4 +9,6 @@ python -m app.init_db
 
 echo "🚀 Starting FastAPI"
 cd /app
-uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+BACKEND_PORT=${BACKEND_PORT:-8000}
+uvicorn app.main:app --host 0.0.0.0 --port $BACKEND_PORT --reload

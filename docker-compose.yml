@@ -6,8 +6,11 @@ services:
     volumes:
       - ./frontend:/app
     ports:
-      - "3000:3000"
+      - "${FRONTEND_PORT}:${FRONTEND_PORT}"
     working_dir: /app
+    env_file:
+      - .env
+      - ./frontend/.env
 
   backend:
     build:
@@ -16,7 +19,8 @@ services:
     volumes:
       - ./backend:/app
     ports:
-      - "8000:8000"
+      - "${BACKEND_PORT}:${BACKEND_PORT}"
     working_dir: /app
     env_file:
+      - .env
       - ./backend/.env.secret

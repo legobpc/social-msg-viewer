@@ -30,7 +30,7 @@ export default function ChatsPage() {
 
   const loadAdminInfo = async () => {
     try {
-      const data = await fetchWithAuth("http://localhost:8000/auth/me");
+      const data = await fetchWithAuth(`${process.env.NEXT_PUBLIC_API_URL}/auth/me`);
       setAdminUser(data);
     } catch (e) {
       console.error("Failed to load admin info", e);
@@ -39,7 +39,7 @@ export default function ChatsPage() {
 
   const loadTelegramInfo = async () => {
     try {
-      const data = await fetchWithAuth("http://localhost:8000/me");
+      const data = await fetchWithAuth(`${process.env.NEXT_PUBLIC_API_URL}/me`);
       setTelegramUser(data);
     } catch (e: any) {
       if (e.detail?.toLowerCase().includes("telegram")) {
@@ -52,7 +52,7 @@ export default function ChatsPage() {
 
   const loadChats = async () => {
     try {
-      const data = await fetchWithAuth("http://localhost:8000/chats");
+      const data = await fetchWithAuth(`${process.env.NEXT_PUBLIC_API_URL}/chats`);
       setChats(data);
     } catch (err: any) {
       if (err.detail?.toLowerCase().includes("telegram")) {
@@ -81,7 +81,7 @@ export default function ChatsPage() {
   }, [telegramNotConnected]);
 
   const handleAdminLogout = async () => {
-    await fetch("http://localhost:8000/auth/logout", {
+    await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/logout`, {
       method: "POST",
       credentials: "include",
     });
@@ -91,7 +91,7 @@ export default function ChatsPage() {
 
   const handleConnectTelegram = async () => {
     const token = getToken();
-    const res = await fetch("http://localhost:8000/connect", {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/connect`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     const data = await res.json();
@@ -100,7 +100,7 @@ export default function ChatsPage() {
 
   const handleSubmitCode = async () => {
     const token = getToken();
-    const res = await fetch(`http://localhost:8000/login?code=${code}`, {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/login?code=${code}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     const data = await res.json();
@@ -112,7 +112,7 @@ export default function ChatsPage() {
 
   const handleTelegramLogout = async () => {
     const token = getToken();
-    const res = await fetch("http://localhost:8000/logout", {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/logout`, {
       method: "POST",
       headers: { Authorization: `Bearer ${token}` },
     });

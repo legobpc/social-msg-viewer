@@ -14,7 +14,7 @@ export default function RegisterPage() {
     e.preventDefault();
     setError("");
 
-    const res = await fetch("http://localhost:8000/auth/register", {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/register`, {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: new URLSearchParams({ username, password }),

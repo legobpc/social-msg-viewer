@@ -38,7 +38,7 @@ export default function MessagesPage() {
       : `chat_id=${chatId}`;
   
     try {
-      const res = await fetch(`http://localhost:8000/messages?${query}`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/messages?${query}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) throw await res.json();

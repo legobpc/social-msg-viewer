@@ -8,7 +8,7 @@ export async function fetchWithAuth(input: RequestInfo, init: RequestInit = {}):
     const res = await fetch(input, { ...init, headers });
   
     if (res.status === 401) {
-      const refresh = await fetch("http://localhost:8000/auth/refresh", {
+      const refresh = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/refresh`, {
         method: "POST",
         credentials: "include",
       });
