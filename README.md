@@ -11,12 +11,14 @@ cd social-msg-viewer
 
 ### Налаштування змінних середовища
 Перед тим, як запускати проект, вам потрібно налаштувати середовище
-- Скопіюйте файл /backend/.env.secret.example в /backend/.env.secret:
 
 ```
-cp .env.secret.example .env.secret
+cp /backend/.env.secret.example /backend/.env.secret
+cp /backend/.env.example /backend/.env
+cp /frontend/.env.example /frontend/.env
 ```
-Відредагуйте файл .env.secret та внесіть ваші власні дані, зокрема:
+
+Відредагуйте файл ```/backend/.env.secret``` та внесіть ваші власні дані, зокрема:
 
 - API_ID — ваш Telegram API ID.
 - API_HASH — ваш Telegram API Hash.
